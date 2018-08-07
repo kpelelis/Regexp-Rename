@@ -55,12 +55,28 @@ function regexpRenameMain( context ) {
 			if ( userInput.viewAtIndex(3).state() ) flag += 'i';
 
 			var find       = new RegExp( userInput.viewAtIndex(1).stringValue(), flag );
+			var uCaseModRe = new Regexp( /\$[U]([0-9])+/);
 			var replace    = userInput.viewAtIndex(5).stringValue();
 			var matchTimes = 0;
 
 			for ( var i = 0; i < layers.count(); i++ ) {
 				if ( layers[i].name().match( find ) ) matchTimes++;
-				layers[i].setName( layers[i].name().replace( find, replace ) );
+				var name = layers[i].name();
+
+				var match, groups = [];
+				while(match = find.exec(name)) {
+					groups.push(match);
+				}
+
+				var grpCnt = 0;
+				name = name.replace( find, replace );
+				name.replace(uCaseModRe, function(m) {
+					var uCaseModRe = new RegExp(/\$[U]([0-9])+/, 'g')
+					var grpNum = uCaseModRe.exec(m)[1];
+					return groups[grpCnt++][grpNum].toUpperCase();
+				});
+
+				layers[i].setName( name );
 			};
 
 			context.document.showMessage( 'Regexp Rename: ' + layers.count() + ' Layer(s) Selected / ' + matchTimes + ' Layer(s) Replaced' );
